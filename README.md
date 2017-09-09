@@ -1,54 +1,152 @@
+## Project: Search and Sample Return
+<!-- ### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+
+---
+
+
+**The goals / steps of this project are the following:**  
+
+**Training / Calibration**  
+
+* Download the simulator and take data in "Training Mode"
+
+* Test out the functions in the Jupyter Notebook provided
+
+* Test the `process_image()` function with the appropriate image processing steps (perspective transform, color threshold etc.) to get from raw images to a map.  The `output_image` you create in this step should demonstrate that your mapping pipeline works.
+
+* Use `moviepy` to process the images in your saved dataset with the `process_image()` function.  Include the video you produce as part of your submission.
+
+**Autonomous Navigation / Mapping**
+
+* Fill in the `perception_step()` function within the `perception.py` script with the appropriate image processing functions to create a map and update `Rover()` data (similar to what you did with `process_image()` in the notebook). 
+* Fill in the `decision_step()` function within the `decision.py` script with conditional statements that take into consideration the outputs of the `perception_step()` in deciding how to issue throttle, brake and steering commands. 
+* Iterate on your perception and decision function until your rover does a reasonable (need to define metric) job of navigating and mapping.  
+ -->
 [//]: # (Image References)
-[image_0]: ./misc/rover_image.jpg
-[![Udacity - Robotics NanoDegree Program](https://s3-us-west-1.amazonaws.com/udacity-robotics/Extra+Images/RoboND_flag.png)](https://www.udacity.com/robotics)
-# Search and Sample Return Project
+
+[image1]: ./misc/rover_image.jpg
+[test_video]: https://www.youtube.com/watch?v=XLubcUM_pXQ
+[overview]: ./misc/overview.jpg
+[image2]: ./calibration_images/example_grid1.jpg
+[image3]: ./calibration_images/example_rock1.jpg 
+[mapping]: ./misc/1vjivc.gif
+
+<!-- ## [Rubric](https://review.udacity.com/#!/rubrics/916/view) Points
+### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+
+--- -->
+### Writeup / README
+
+### Video of This Project
+#### Checkout the [test video][test_video] of this Rover challenge on my YouTube playlist.
+
+### Notebook Analysis
+#### 1. Ran the functions provided in the well designed Jupyter Notebook that helped even afterwards to rapidly design solutions for the autonomous driving. Defined functions for:
+1. Navigation thresholding
+2. Obstacle thresholding
+3. Rock Sample thresholding
+
+![mapping overview][mapping]
+
+#### 2. The `process_image()` function is populated  with the appropriate analysis steps to identify the pixels corresponding to 
+
+* Navigable terrain using `color_thresh_navigable`
+
+* Obstacle (inversion of the navigable terrain) using the `obstacle_thresh_obstacle`
+
+* Golden Rock sample using the `color_thresh_golden` to find the pixels within the RGB range of the golden rocks.
+
+Finally, map them onto the ground truth map of the world. The output images from the  `process_image()` are used to create video output using the `moviepy` functions. 
 
 
-![alt text][image_0] 
+![overview image][overview]
 
-This project is modeled after the [NASA sample return challenge](https://www.nasa.gov/directorates/spacetech/centennial_challenges/sample_return_robot/index.html) and it will give you first hand experience with the three essential elements of robotics, which are perception, decision making and actuation.  You will carry out this project in a simulator environment built with the Unity game engine.  
+### Autonomous Navigation and Mapping
 
-## The Simulator
-The first step is to download the simulator build that's appropriate for your operating system.  Here are the links for [Linux](https://s3-us-west-1.amazonaws.com/udacity-robotics/Rover+Unity+Sims/Linux_Roversim.zip), [Mac](	https://s3-us-west-1.amazonaws.com/udacity-robotics/Rover+Unity+Sims/Mac_Roversim.zip), or [Windows](https://s3-us-west-1.amazonaws.com/udacity-robotics/Rover+Unity+Sims/Windows_Roversim.zip).  
+<!-- #### 1. Fill in the `perception_step()` (at the bottom of the `perception.py` script) and `decision_step()` (in `decision.py`) functions in the autonomous mapping scripts and an explanation is provided in the writeup of how and why these functions were modified as they were. -->
 
-You can test out the simulator by opening it up and choosing "Training Mode".  Use the mouse or keyboard to navigate around the environment and see how it looks.
+#### 1. The perception_step is derived from the `process_image` function in the Notebook. It gave a 30% improvement when I considered only a cropped out middle portion of the vision\_image rather than the whole image.
 
-## Dependencies
-You'll need Python 3 and Jupyter Notebooks installed to do this project.  The best way to get setup with these if you are not already is to use Anaconda following along with the [RoboND-Python-Starterkit](https://github.com/ryan-keenan/RoboND-Python-Starterkit). 
+```python
+    
+h, w = navigable.shape[:2]
+delta = 50
+region_of_interest = navigable[h - delta: h,\
+ 						int(w/2) - delta : int(w/2) + delta ]
 
+navigable_x , navigable_y = rover_coords(region_of_interest)
 
-Here is a great link for learning more about [Anaconda and Jupyter Notebooks](https://classroom.udacity.com/courses/ud1111)
-
-## Recording Data
-I've saved some test data for you in the folder called `test_dataset`.  In that folder you'll find a csv file with the output data for steering, throttle position etc. and the pathnames to the images recorded in each run.  I've also saved a few images in the folder called `calibration_images` to do some of the initial calibration steps with.  
-
-The first step of this project is to record data on your own.  To do this, you should first create a new folder to store the image data in.  Then launch the simulator and choose "Training Mode" then hit "r".  Navigate to the directory you want to store data in, select it, and then drive around collecting data.  Hit "r" again to stop data collection.
-
-## Data Analysis
-Included in the IPython notebook called `Rover_Project_Test_Notebook.ipynb` are the functions from the lesson for performing the various steps of this project.  The notebook should function as is without need for modification at this point.  To see what's in the notebook and execute the code there, start the jupyter notebook server at the command line like this:
-
-```sh
-jupyter notebook
 ```
 
-This command will bring up a browser window in the current directory where you can navigate to wherever `Rover_Project_Test_Notebook.ipynb` is and select it.  Run the cells in the notebook from top to bottom to see the various data analysis steps.  
+### The decisions made by the rover for autonomous driving:
+#### 1. Right wall following by setting an offset to the steering that depends on the mean of nav_angles
 
-The last two cells in the notebook are for running the analysis on a folder of test images to create a map of the simulator environment and write the output to a video.  These cells should run as-is and save a video called `test_mapping.mp4` to the `output` folder.  This should give you an idea of how to go about modifying the `process_image()` function to perform mapping on your data.  
+```python
 
-## Navigating Autonomously
-The file called `drive_rover.py` is what you will use to navigate the environment in autonomous mode.  This script calls functions from within `perception.py` and `decision.py`.  The functions defined in the IPython notebook are all included in`perception.py` and it's your job to fill in the function called `perception_step()` with the appropriate processing steps and update the rover map. `decision.py` includes another function called `decision_step()`, which includes an example of a conditional statement you could use to navigate autonomously.  Here you should implement other conditionals to make driving decisions based on the rover's state and the results of the `perception_step()` analysis.
+steer_offset = -15
+Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi + steer_offset) \
+					, -15, 15)
 
-`drive_rover.py` should work as is if you have all the required Python packages installed. Call it at the command line like this: 
+```
 
-```sh
-python drive_rover.py
-```  
+#### 2.Detect if the rover is stuck by checking if the `Rover` state variable `Rover.stuck` if above the defined threshold `Rover.stuck_time_threshold` and start turning right to get out of stuck state.
 
-Then launch the simulator and choose "Autonomous Mode".  The rover should drive itself now!  It doesn't drive that well yet, but it's your job to make it better!  
+```python
+if Rover.vel < 0.1 and Rover.vel > -1.0:
+    Rover.stuck_time_threshold += 1
+    Rover.throttle = Rover.throttle_set
+    if Rover.stuck_time_threshold > 100:
+        Rover.stuck = True
+    if Rover.stuck:
+        Rover.throttle = 0
+        # Set brake to stored brake value
+        Rover.brake = Rover.brake_set
+        Rover.steer = 0
+        Rover.mode = 'stop'
 
-**Note: running the simulator with different choices of resolution and graphics quality may produce different results!  Make a note of your simulator settings in your writeup when you submit the project.**
+```
+#### 3. Fine tuned the constants for for better turning and faster controlling of the Rover
 
-### Project Walkthrough
-If you're struggling to get started on this project, or just want some help getting your code up to the minimum standards for a passing submission, we've recorded a walkthrough of the basic implementation for you but **spoiler alert: this [Project Walkthrough Video](https://www.youtube.com/watch?v=oJA6QHDPdQw) contains a basic solution to the project!**.
+```python
 
+self.stop_forward = 150 # Initiate stopping sooner to prevent bumping into obstacle
+self.go_forward = 400 # Threshold to go forward again
+self.throttle_set = 0.6 # Increased throttle setting when accelerating for faster navigation
+
+```
+
+
+
+#### 4. Added code in the  `supporting_functions.py` for debugging purposes.
+
+```python
+cv2.putText(map_add,"  Nav_angle len: "+str((len(Rover.nav_angles))), (0, 155), \
+            cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
+cv2.putText(map_add,"  Mode: "+str(Rover.mode), (0, 145), \
+            cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
+```
+
+
+
+#### 2. Launching in autonomous mode the rover can navigate and map autonomously. It can be improved by using:
+
+1. HSV thresholding.
+
+2. Using A* for path planning.
+
+3. Better way to manage the state of the `Rover`.
+
+4. PID tuning for the constants `threshold_set`, `go_forward`, `stop_forward`.
+
+#### Specifications to reproduce the results:
+
+* Resolution: `1024 x 768`
+
+* Graphis quality: Good
+
+* `Mapping: 99.9%`
+
+* `Fidelity: 75.1%`
+
+* Time Taken: 420 seconds @ 20 `Frames per second`
 
