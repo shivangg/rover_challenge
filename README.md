@@ -150,3 +150,6 @@ cv2.putText(map_add,"  Mode: "+str(Rover.mode), (0, 145), \
 
 * Time Taken: 420 seconds @ 20 `Frames per second`
 
+
+#### The Unity simulator can be downloaded for [Linux](https://s3-us-west-1.amazonaws.com/udacity-robotics/Rover+Unity+Sims/Linux_Roversim.zip) and [Windows](https://s3-us-west-1.amazonaws.com/udacity-robotics/Rover+Unity+Sims/Windows_Roversim.zip)
+
