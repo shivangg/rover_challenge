@@ -40,7 +40,8 @@ class RoverState():
     def __init__(self):
         self.start_time = None # To record the start time of navigation
         self.total_time = None # To record total duration of naviagation
-        self.stop_time = None   # To record time instant when it stopped
+        self.stuck_time_threshold = 0 # To initiate unstuck sequence above the threshold
+        self.data = 0   # To record time instant when it stopped
         self.img = None # Current camera image
         self.pos = None # Current position (x, y)
         self.yaw = 0.0 # Current yaw angle
@@ -63,16 +64,17 @@ class RoverState():
         self.ground_truth = ground_truth_3d # Ground truth worldmap
         self.mode = 'forward' # Current mode (can be forward or stop)
         # self.throttle_set = 0.2 # Throttle setting when accelerating
-        self.throttle_set = 0.7
+        self.throttle_set = 0.6
         self.brake_set = 10 # Brake setting when braking
         # The stop_forward and go_forward fields below represent total count
         # of navigable terrain pixels.  This is a very crude form of knowing
         # when you can keep going and when you should stop.  Feel free to
         # get creative in adding new fields or modifying these!
-        self.stop_forward = 50 # Threshold to initiate stopping
-        self.go_forward = 500 # Threshold to go forward again
+        self.stop_forward = 150 # Threshold to initiate stopping
+        self.go_forward = 400 # Threshold to go forward again
+        self.stuck = False
         # self.max_vel = 2 # Maximum velocity (meters/second)
-        self.max_vel = 3
+        self.max_vel = 2
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
         # on screen in autonomous mode
@@ -121,9 +123,9 @@ def telemetry(sid, data):
 
             # Execute the perception and decision steps to update the Rover's state
             
-            if Rover.pitch < 1.0 or Rover.pitch > 359.0 and Rover.roll < 1.0 or Rover.roll > 358.0:
-                Rover = perception_step(Rover)
-                Rover = decision_step(Rover)
+            # if Rover.pitch < 1.0 or Rover.pitch > 359.0 and Rover.roll < 1.0 or Rover.roll > 358.0:
+            Rover = perception_step(Rover)
+            Rover = decision_step(Rover)
 
             
             # Create output images to send to server
