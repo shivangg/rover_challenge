@@ -4,8 +4,8 @@ import cv2
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
 
-red_threshold = 170
-green_threshold = 170
+red_threshold = 150
+green_threshold = 150
 blue_threshold = 150
 ###### Threshold for Golden Sample 
 red_golden_higher_threshold = 230
@@ -160,28 +160,50 @@ def perception_step(Rover):
                   [Rover.img.shape[1]/2 + dst_size, Rover.img.shape[0] - 2*dst_size - bottom_offset], 
                   [Rover.img.shape[1]/2 - dst_size, Rover.img.shape[0] - 2*dst_size - bottom_offset],
                   ])
+    image = Rover.img
+    # h_image, w_image = image.shape[0], image.shape[1]
     
+    # img_crop = image[h_image - 90: h_image, int(w_image/2) - 90 : int(w_image/2) + 90 ]
+
     # 2) Apply perspective transform
-    warped = perspect_transform(Rover.img, source, destination)
+    warped = perspect_transform(image, source, destination)
 #     plt.imshow(warped)
     
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     navigable =  color_thresh_navigable(warped, rgb_thresh=rgb_threshold)
     obstacle = color_thresh_obstacle(warped, rgb_thresh=rgb_threshold)
     rock = color_thresh_golden(warped, rgb_thresh=rgb_golden_threshold)
-# 1024 x 768
-    Rover.vision_image[:,:,0] = obstacle*255
-    Rover.vision_image[:,:,1] = rock*255
-    Rover.vision_image[:,:,2] = navigable*255
 
-#     plt.imshow(navigable, cmap='gray')
-#     plt.imshow(obstacle, cmap='gray')
-#     plt.imshow(rock, cmap='gray')
-    
-    # 4) Convert thresholded image pixel values to rover-centric coords
-    navigable_x , navigable_y = rover_coords(navigable)
+    obstacle_map = obstacle*255
+    Rover.vision_image[:,:,0] = obstacle*255    
+    # Rover.vision_image[:,:,0] = cv2.resize(obstacle*255, (320, 160), interpolation=cv2.INTER_CUBIC)
+    Rover.vision_image[:,:,1] = rock*255
+    # Rover.vision_image[:,:,1] = cv2.resize(rock*255, (320, 160), interpolation=cv2.INTER_CUBIC)
+    Rover.vision_image[:,:,2] = navigable*255
+    # Rover.vision_image[:,:,2] = cv2.resize(navigable*255, (320, 160), interpolation=cv2.INTER_CUBIC)
+    h_obstacle_map , w_obstacle_map = obstacle_map.shape[:2]
+    delta = 25
+
+    region_upfront = obstacle_map[h_obstacle_map - delta : h_obstacle_map, int((w_obstacle_map - delta)/2): int((w_obstacle_map + delta)/2) ]
+    # print(np.sum(region_upfront))
+    # at 90,000 start the un stuck sequence 
+    stuck_threshold = 90000
+    if np.sum(region_upfront) > 90000:
+        Rover.stuck = True
+    # print(Rover.stuck)
+    # print(Rover.stuck_time_threshold )
+
+    # consider only a small portion in frontview of the rover
+    h, w = navigable.shape[:2]
+    delta = 50
+    region_of_interest = navigable[h - delta: h, int(w/2) - delta : int(w/2) + delta ]
+
+    # 4) Convert thresholded image pixel(of shorter span) values to rover-centric coords
+    navigable_x , navigable_y = rover_coords(region_of_interest)
     obstacle_x , obstacle_y = rover_coords(obstacle)
     rock_x , rock_y = rover_coords(rock)
+
+
     
     # 5) Convert rover-centric pixel values to world coords
     # added -50 bias for wall crawling
@@ -190,6 +212,9 @@ def perception_step(Rover):
     rock_x_world , rock_y_world = pix_to_world(rock_x , rock_y, Rover.pos[0], Rover.pos[1], Rover.yaw, Rover.worldmap.shape[0], 10)
     
     Rover.nav_dists, Rover.nav_angles = to_polar_coords(navigable_x, navigable_y)
+    Rover.rock_dists, Rover.rock_angles = to_polar_coords(rock_x, rock_y)
+
+    print(Rover.rock_dists, Rover.rock_angles)
     
     # Rover.nav_angles = temp_nav_angles 
 
