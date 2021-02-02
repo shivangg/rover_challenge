@@ -35,9 +35,10 @@
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 --- -->
-### Writeup / README
 
-### Video of This Project
+### Working GIF
+![Working GIF](./marsRover.gif)
+
 #### Checkout the [test video][test_video] of this Rover challenge on my YouTube playlist.
 
 ### Notebook Analysis
